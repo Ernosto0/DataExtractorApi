@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}API Keys - Data Extractor{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">API Keys</h1>
+            <button onclick="regenerateApiKey()" 
+                    class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded inline-flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Regenerate Key
+            </button>
+        </div>
+
+        {% if error %}
+        <div class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+            <span class="block sm:inline">{{ error }}</span>
+        </div>
+        {% endif %}
+
+        {% if success %}
+        <div class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+            <span class="block sm:inline">{{ success }}</span>
+        </div>
+        {% endif %}
+
+        <div class="space-y-6">
+            <!-- Current API Key -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Your API Key</label>
+                <div class="flex items-center space-x-2">
+                    <div class="relative flex-grow">
+                        <input type="password" id="apiKey" value="{{ user.api_key if user.api_key else 'No API key generated yet' }}" readonly
+                            class="block w-full pr-10 py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        <button onclick="toggleApiKeyVisibility()" 
+                                class="absolute inset-y-0 right-0 px-3 flex items-center bg-gray-100 rounded-r-md border-l">
+                            <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                    <button onclick="copyApiKey()" 
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copy
+                    </button>
+                </div>
+            </div>
+
+            <!-- API Usage Information -->
+            <div class="bg-gray-50 rounded-lg p-4 mt-6">
+                <h2 class="text-lg font-medium text-gray-900 mb-4">API Usage Instructions</h2>
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700">Authentication</h3>
+                        <p class="mt-1 text-sm text-gray-500">Include your API key in the request headers:</p>
+                        <pre class="mt-2 bg-gray-800 text-white rounded p-3 overflow-x-auto"><code>X-API-Key: your_api_key_here</code></pre>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-700">Example Request</h3>
+                        <pre class="mt-2 bg-gray-800 text-white rounded p-3 overflow-x-auto"><code>curl -X POST "http://localhost:8000/extract" \
+    -H "X-API-Key: your_api_key_here" \
+    -H "Content-Type: application/json" \
+    -d '{"text": "Your text here", "fields": ["field1", "field2"]}'</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleApiKeyVisibility() {
+        const apiKeyInput = document.getElementById('apiKey');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        if (apiKeyInput.type === 'password') {
+            apiKeyInput.type = 'text';
+            eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            `;
+        } else {
+            apiKeyInput.type = 'password';
+            eyeIcon.innerHTML = `
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            `;
+        }
+    }
+
+    function copyApiKey() {
+        const apiKeyInput = document.getElementById('apiKey');
+        const originalType = apiKeyInput.type;
+        apiKeyInput.type = 'text';  // Temporarily show the key to copy it
+        navigator.clipboard.writeText(apiKeyInput.value).then(() => {
+            apiKeyInput.type = originalType;  // Restore the original visibility
+            alert('API key copied to clipboard!');
+        }).catch(() => {
+            apiKeyInput.type = originalType;  // Restore the original visibility
+            alert('Failed to copy API key. Please try again.');
+        });
+    }
+
+    function regenerateApiKey() {
+        if (confirm('Are you sure you want to regenerate your API key? The old key will stop working immediately.')) {
+            fetch('/apikeys/regenerate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.api_key) {
+                    document.getElementById('apiKey').value = data.api_key;
+                    alert('API key has been regenerated successfully!');
+                    location.reload();  // Reload to update the session
+                } else {
+                    alert('Error regenerating API key: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error regenerating API key. Please try again.');
+                console.error('Error:', error);
+            });
+        }
+    }
+</script>
+{% endblock %}

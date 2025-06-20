@@ -99,6 +99,7 @@ class OpenAIExtractor:
             )
 
             output_text = response.choices[0].message.content.strip()
+            logger.info(f"OpenAI API call response: {output_text}")
             
             try:
                 extracted_data = json.loads(output_text)

@@ -8,19 +8,32 @@ from utils import DataExtractor, OpenAIExtractor
 from auth import (
     User, UserCreate, Token,
     create_user, authenticate_user, create_access_token,
-    get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
+    get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, regenerate_api_key, check_usage_limit, update_usage_limit
 )
 from datetime import timedelta
 from pydantic import BaseModel, Field, validator
 from typing import Union, Dict, List, Optional
 import logging
 from starlette.middleware.sessions import SessionMiddleware
-from database import users
+from database import users, generate_api_key
+from fastapi.responses import JSONResponse
+import secrets
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 class ExtractionRequest(BaseModel):
+
+    apikey: str = Field(
+        ...,
+        description="API key for authentication",
+        example="1234567890"
+    )
+
     text: str = Field(
         ..., 
         description="The text to extract information from",
@@ -52,6 +65,12 @@ class ExtractionRequest(BaseModel):
         if isinstance(v, dict) and (not v or not all(v.keys()) or not all(v.values())):
             raise ValueError('Fields map cannot be empty and must contain non-empty strings')
         return v
+    
+    @validator('apikey')
+    def apikey_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError('API key is required')
+        return v.strip()
 
     class Config:
         schema_extra = {
@@ -134,13 +153,11 @@ templates = Jinja2Templates(directory="templates")
 
 async def get_current_user_from_session(request: Request):
     """Get current user from session"""
-    if "access_token" not in request.session:
+    if "user" not in request.session:
         return None
     
     try:
-        token = request.session["access_token"]
-        current_user = await get_current_user(token)
-        return current_user
+        return request.session["user"]
     except:
         return None
 
@@ -201,8 +218,13 @@ async def login_web(request: Request):
         expires_delta=access_token_expires
     )
     
-    # Store token in session
+    # Store user data in session
     request.session["access_token"] = access_token
+    request.session["user"] = {
+        "id": str(user["_id"]),
+        "email": user["email"],
+        "api_key": user.get("api_key")
+    }
     
     response = RedirectResponse(url="/", status_code=302)
     return response
@@ -252,8 +274,9 @@ async def register_web(request: Request):
 @app.get("/logout", include_in_schema=False)
 async def logout(request: Request):
     """Handle logout"""
+    # Clear session
     request.session.clear()
-    return RedirectResponse(url="/login", status_code=302)
+    return RedirectResponse(url="/", status_code=302)
 
 @app.post(
     "/extract",
@@ -267,15 +290,34 @@ async def logout(request: Request):
     tags=["extraction"]
 )
 async def extract_data(req: ExtractionRequest):
+
+    logger.info(f"Extraction request: {req}")
+
     """
     Extract structured data from unstructured text.
-
-    This endpoint accepts text input and a specification of fields to extract,
-    then uses AI to extract the requested information into a structured format.
-
-    - **text**: The input text to extract information from
+    
+    Parameters:
+    - **text**: The input text to extract data from
     - **fields**: Either a list of field names or a dictionary mapping aliases to field names
     """
+
+    if req.apikey is None:
+        raise HTTPException(status_code=401, detail="API key is required")
+
+    user = users.find_one({"api_key": req.apikey})
+    if user is None:
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+    # Get user ID, falling back to email if ID is not present
+    user_identifier = user.get("id") or user.get("_id") or user.get("email")
+    if not user_identifier:
+        raise HTTPException(status_code=500, detail="Invalid user data")
+
+    if not check_usage_limit(user_identifier):
+        raise HTTPException(status_code=402, detail="Usage limit reached. Please upgrade your plan.")
+
+    update_usage_limit(user_identifier, 1)
+
     try:
         openai_extractor = OpenAIExtractor({"text": req.text}, fields=req.fields)
         result = openai_extractor.openai_api_call()
@@ -305,6 +347,57 @@ async def extract_data(req: ExtractionRequest):
             detail="An unexpected error occurred during extraction"
         )
    
-    
+        logger.error(f"Extraction error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    return openai_extractor.extract()
 
+@app.get("/apikeys", response_class=HTMLResponse, include_in_schema=False)
+async def apikeys_page(request: Request, success: str = None, error: str = None):
+    """Render the API keys page"""
+    current_user = await get_current_user_from_session(request)
+    if not current_user:
+        return RedirectResponse(url="/login", status_code=302)
+    return templates.TemplateResponse("apikeys.html", {
+        "request": request,
+        "user": current_user,
+        "success": success,
+        "error": error
+    })
+
+@app.post("/apikeys/regenerate", response_model=dict, include_in_schema=False)
+async def regenerate_api_key(request: Request):
+    """Regenerate API key for the current user"""
+    current_user = await get_current_user_from_session(request)
+    if not current_user:
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Not authenticated"}
+        )
+    
+    try:
+        # Generate a new API key
+        new_api_key = secrets.token_urlsafe(32)
+        
+        # Update the user's API key in the database using email as identifier
+        result = users.update_one(
+            {"email": current_user["email"]},
+            {"$set": {"api_key": new_api_key}}
+        )
+        
+        if result.modified_count == 0:
+            return JSONResponse(
+                status_code=500,
+                content={"error": "Failed to update API key"}
+            )
+        
+        # Update session with new API key
+        request.session["user"]["api_key"] = new_api_key
+        
+        return {"api_key": new_api_key}
+    except Exception as e:
+        logger.error(f"Error regenerating API key: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"error": str(e)}
+        )
 
