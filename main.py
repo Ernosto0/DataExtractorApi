@@ -1,15 +1,33 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from utils import DataExtractor, OpenAIExtractor
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
+from typing import Union, Dict, List
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ExtractionRequest(BaseModel):
-    text: str
-    fields: list[str]
+    text: str = Field(..., description="The text to extract information from")
+    fields: Union[List[str], Dict[str, str]] = Field(
+        ..., 
+        description="Fields to extract. Can be either a list of field names or a map of alias:field_name"
+    )
+
+    @validator('text')
+    def text_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError('Text cannot be empty')
+        return v.strip()
+
+    @validator('fields')
+    def fields_must_not_be_empty(cls, v):
+        if isinstance(v, list) and (not v or not all(v)):
+            raise ValueError('Fields list cannot be empty and must contain non-empty strings')
+        if isinstance(v, dict) and (not v or not all(v.keys()) or not all(v.values())):
+            raise ValueError('Fields map cannot be empty and must contain non-empty strings')
+        return v
 
 app = FastAPI(
     title="Data Extractor API",
@@ -36,21 +54,34 @@ async def health_check():
 
 @app.post("/extract")
 async def extract_data(req: ExtractionRequest):
-
-    if not req.text:
-        raise HTTPException(status_code=400, detail="No text provided.")    
-
-    result = {}
-
-    data_extractor = DataExtractor(req.text)
-    data_extractor.extract_data()
-    openai_extractor = OpenAIExtractor({"text": req.text}, fields=req.fields)
+    try:
+        openai_extractor = OpenAIExtractor({"text": req.text}, fields=req.fields)
+        result = openai_extractor.openai_api_call()
         
-    result = openai_extractor.openai_api_call()
-    
-    logger.info(f"Data extracted successfully: {result}")
-
-    return {"message": "Data extracted successfully", "data": result}
+        if "error" in result:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Extraction failed",
+                    "error": result["error"],
+                    "details": result.get("details", None)
+                }
+            )
+        
+        logger.info(f"Data extracted successfully: {result}")
+        return {
+            "message": "Data extracted successfully",
+            "data": result
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Unexpected error during extraction: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred during extraction"
+        )
    
     
 
