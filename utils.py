@@ -65,7 +65,7 @@ class OpenAIExtractor:
 
         field_string = ", ".join(field_list)
         
-        # Enhanced prompt to ensure consistent JSON output
+        # Enhanced prompt to ensure consistent JSON output with proper type handling
         prompt = f"""
             Given the following text, extract these specific fields: {field_string}
             
@@ -80,13 +80,19 @@ class OpenAIExtractor:
             3. Use null for any fields that cannot be found or are uncertain
             4. Do not include any additional fields
             5. Do not include any explanations or notes
+            6. For numeric values (quantities, amounts, etc.), use numbers instead of strings
+            7. For dates, use string format
+            8. For currency amounts, return only the numeric value without currency symbols
         """
 
         try:
             response = self.client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a precise data extraction assistant that returns only valid JSON."},
+                    {
+                        "role": "system", 
+                        "content": "You are a precise data extraction assistant that returns only valid JSON. For numeric fields like quantities and amounts, use numbers instead of strings. For dates, use strings. For currency, extract only the numeric value."
+                    },
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.2,
@@ -97,10 +103,18 @@ class OpenAIExtractor:
             try:
                 extracted_data = json.loads(output_text)
                 
-                # Ensure all fields are present with null for missing ones
+                # Process the extracted data
                 processed_result = {}
                 for original_field, alias in field_mapping.items():
-                    processed_result[alias] = extracted_data.get(original_field, None)
+                    value = extracted_data.get(original_field)
+                    # Convert string numbers to actual numbers if possible
+                    if isinstance(value, str) and value.replace('.', '').isdigit():
+                        try:
+                            # Convert to int if no decimal point, float if there is one
+                            value = int(value) if '.' not in value else float(value)
+                        except (ValueError, TypeError):
+                            pass
+                    processed_result[alias] = value
                 
                 return processed_result
                 
