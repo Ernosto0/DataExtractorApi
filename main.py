@@ -4,7 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from utils import DataExtractor, OpenAIExtractor
+from utils import DataExtractor, OpenAIExtractor, OpenAIClassifier
 from auth import (
     User, UserCreate, Token,
     create_user, authenticate_user, create_access_token,
@@ -92,6 +92,51 @@ class ExtractedData(BaseModel):
             "phone": "(555) 123-4567",
             "quantity": 3,
             "amount": 270.00
+        }
+    )
+
+    
+
+class ClassificationRequest(BaseModel):
+    """Model for classification requests"""
+    apikey: str = Field(..., description="API key for authentication")
+    text: str = Field(..., description="The text to classify")
+    labels: List[str] = Field(..., description="The labels to classify the text into")
+
+    @validator('text')
+    def text_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError('Text cannot be empty')
+        return v.strip()
+    
+    @validator('apikey')
+    def apikey_must_not_be_empty(cls, v):
+        if not v.strip():
+            raise ValueError('API key is required')
+        return v.strip()
+
+    @validator('labels')
+    def labels_must_not_be_empty(cls, v):
+        if not v:
+            raise ValueError('Labels cannot be empty')
+        return v
+    
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "text": "I am having trouble logging in",
+                "labels": ["Bug", "Feature Request", "Billing", "Login Issue"]
+            }
+        }
+class ClassifiedData(BaseModel):
+    """Model for successful classification results"""
+    message: str = Field(..., example="Data classified successfully")
+    data: Dict[str, List[str]] = Field(
+        ...,
+        description="Classification results with 'labels' key containing the matched labels",
+        example={
+            "labels": ["Bug", "Feature Request", "Billing", "Login Issue"]
         }
     )
 
@@ -350,6 +395,69 @@ async def extract_data(req: ExtractionRequest):
         logger.error(f"Extraction error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     return openai_extractor.extract()
+
+
+@app.post("/classify", response_model=ClassifiedData, 
+          responses={
+              200: {"description": "Successful classification", "model": ClassifiedData},
+              400: {"description": "Invalid input", "model": ErrorResponse},
+              422: {"description": "Classification failed", "model": ErrorResponse},
+              500: {"description": "Internal server error", "model": ErrorResponse}
+          },
+          tags=["classification"])
+async def classify_data(req: ClassificationRequest):
+    """Classify data using OpenAI"""
+    try:
+        logger.info(f"Classification request received: {req}")
+
+        if req.apikey is None:
+            raise HTTPException(status_code=401, detail="API key is required")
+
+        user = users.find_one({"api_key": req.apikey})
+        if user is None:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+
+        # Get user ID, falling back to email if ID is not present
+        user_identifier = user.get("id") or user.get("_id") or user.get("email")
+        if not user_identifier:
+            raise HTTPException(status_code=500, detail="Invalid user data")
+
+        if not check_usage_limit(user_identifier):
+            raise HTTPException(status_code=402, detail="Usage limit reached. Please upgrade your plan.")
+
+        update_usage_limit(user_identifier, 1)
+
+        openai_classifier = OpenAIClassifier({"text": req.text}, fields=req.labels)
+        result = openai_classifier.openai_api_call()
+        
+        if isinstance(result, dict) and "error" in result:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Classification failed",
+                    "error": result["error"],
+                    "details": result.get("details", None)
+                }
+            )
+        
+        logger.info(f"Data classified successfully: {result}")
+        return {
+            "message": "Data classified successfully",
+            "data": result
+        }
+        
+    except ValueError as e:
+        logger.error(f"Validation error: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException as e:
+        logger.error(f"HTTP error: {str(e.detail)}")
+        raise e
+    except Exception as e:
+        logger.error(f"Unexpected error during classification: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An unexpected error occurred during classification: {str(e)}"
+        )
 
 @app.get("/apikeys", response_class=HTMLResponse, include_in_schema=False)
 async def apikeys_page(request: Request, success: str = None, error: str = None):
