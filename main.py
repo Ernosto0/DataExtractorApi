@@ -8,16 +8,17 @@ from utils import DataExtractor, OpenAIExtractor, OpenAIClassifier
 from auth import (
     User, UserCreate, Token,
     create_user, authenticate_user, create_access_token,
-    get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, regenerate_api_key, check_usage_limit, update_usage_limit
+    get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, regenerate_api_key, check_usage_limit, update_usage_limit, get_user_by_email
 )
-from datetime import timedelta
+from datetime import timedelta, datetime
 from pydantic import BaseModel, Field, validator
 from typing import Union, Dict, List, Optional
 import logging
 from starlette.middleware.sessions import SessionMiddleware
-from database import users, generate_api_key
+from database import users, generate_api_key, log_api_usage, get_user_usage_stats
 from fastapi.responses import JSONResponse
 import secrets
+import time
 
 # Configure logging
 logging.basicConfig(
@@ -25,6 +26,10 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+MAX_TEXT_LENGTH = 2000
+
+
 
 class ExtractionRequest(BaseModel):
 
@@ -72,6 +77,12 @@ class ExtractionRequest(BaseModel):
             raise ValueError('API key is required')
         return v.strip()
 
+    @validator('text')
+    def text_must_be_less_than_characters(cls, v):
+        if len(v) > MAX_TEXT_LENGTH:
+            raise ValueError(f'Text cannot be more than {MAX_TEXT_LENGTH} characters')
+        return v
+    
     class Config:
         schema_extra = {
             "example": {
@@ -121,6 +132,11 @@ class ClassificationRequest(BaseModel):
             raise ValueError('Labels cannot be empty')
         return v
     
+    @validator('text')
+    def text_must_be_less_than_characters(cls, v):
+        if len(v) > MAX_TEXT_LENGTH:
+            raise ValueError(f'Text cannot be more than {MAX_TEXT_LENGTH} characters')
+        return v
 
     class Config:
         schema_extra = {
@@ -335,8 +351,8 @@ async def logout(request: Request):
     tags=["extraction"]
 )
 async def extract_data(req: ExtractionRequest):
-
     logger.info(f"Extraction request: {req}")
+    start_time = time.time()  # Start timing the request
 
     """
     Extract structured data from unstructured text.
@@ -367,7 +383,17 @@ async def extract_data(req: ExtractionRequest):
         openai_extractor = OpenAIExtractor({"text": req.text}, fields=req.fields)
         result = openai_extractor.openai_api_call()
         
+        # Calculate response time
+        response_time = int((time.time() - start_time) * 1000)  # Convert to milliseconds
+        
         if "error" in result:
+            # Log failed attempt
+            await log_api_usage(
+                user_id=user.get("id"),
+                endpoint="/extract",
+                status="error",
+                response_time=response_time
+            )
             raise HTTPException(
                 status_code=422,
                 detail={
@@ -377,6 +403,14 @@ async def extract_data(req: ExtractionRequest):
                 }
             )
         
+        # Log successful attempt
+        await log_api_usage(
+            user_id=user.get("id"),
+            endpoint="/extract",
+            status="success",
+            response_time=response_time
+        )
+        
         logger.info(f"Data extracted successfully: {result}")
         return {
             "message": "Data extracted successfully",
@@ -384,18 +418,25 @@ async def extract_data(req: ExtractionRequest):
         }
         
     except ValueError as e:
+        await log_api_usage(
+            user_id=user.get("id"),
+            endpoint="/extract",
+            status="error",
+            response_time=int((time.time() - start_time) * 1000)
+        )
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        await log_api_usage(
+            user_id=user.get("id"),
+            endpoint="/extract",
+            status="error",
+            response_time=int((time.time() - start_time) * 1000)
+        )
         logger.error(f"Unexpected error during extraction: {e}")
         raise HTTPException(
             status_code=500,
             detail="An unexpected error occurred during extraction"
         )
-   
-        logger.error(f"Extraction error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-    return openai_extractor.extract()
-
 
 @app.post("/classify", response_model=ClassifiedData, 
           responses={
@@ -407,6 +448,8 @@ async def extract_data(req: ExtractionRequest):
           tags=["classification"])
 async def classify_data(req: ClassificationRequest):
     """Classify data using OpenAI"""
+    start_time = time.time()  # Start timing the request
+    
     try:
         logger.info(f"Classification request received: {req}")
 
@@ -430,7 +473,17 @@ async def classify_data(req: ClassificationRequest):
         openai_classifier = OpenAIClassifier({"text": req.text}, fields=req.labels)
         result = openai_classifier.openai_api_call()
         
+        # Calculate response time
+        response_time = int((time.time() - start_time) * 1000)  # Convert to milliseconds
+        
         if isinstance(result, dict) and "error" in result:
+            # Log failed attempt
+            await log_api_usage(
+                user_id=user.get("id"),
+                endpoint="/classify",
+                status="error",
+                response_time=response_time
+            )
             raise HTTPException(
                 status_code=422,
                 detail={
@@ -440,6 +493,14 @@ async def classify_data(req: ClassificationRequest):
                 }
             )
         
+        # Log successful attempt
+        await log_api_usage(
+            user_id=user.get("id"),
+            endpoint="/classify",
+            status="success",
+            response_time=response_time
+        )
+        
         logger.info(f"Data classified successfully: {result}")
         return {
             "message": "Data classified successfully",
@@ -447,12 +508,30 @@ async def classify_data(req: ClassificationRequest):
         }
         
     except ValueError as e:
+        await log_api_usage(
+            user_id=user.get("id"),
+            endpoint="/classify",
+            status="error",
+            response_time=int((time.time() - start_time) * 1000)
+        )
         logger.error(f"Validation error: {str(e)}")
         raise HTTPException(status_code=400, detail=str(e))
     except HTTPException as e:
+        await log_api_usage(
+            user_id=user.get("id"),
+            endpoint="/classify",
+            status="error",
+            response_time=int((time.time() - start_time) * 1000)
+        )
         logger.error(f"HTTP error: {str(e.detail)}")
         raise e
     except Exception as e:
+        await log_api_usage(
+            user_id=user.get("id"),
+            endpoint="/classify",
+            status="error",
+            response_time=int((time.time() - start_time) * 1000)
+        )
         logger.error(f"Unexpected error during classification: {str(e)}")
         raise HTTPException(
             status_code=500,
@@ -509,3 +588,56 @@ async def regenerate_api_key(request: Request):
             content={"error": str(e)}
         )
 
+@app.get("/usage", response_class=HTMLResponse, include_in_schema=False)
+async def usage_page(request: Request):
+    """Render the usage page"""
+    logger.info("Accessing usage page")
+    
+    current_user = await get_current_user_from_session(request)
+    if not current_user:
+        logger.warning("No user found in session")
+        return RedirectResponse(url="/login", status_code=302)
+    
+    logger.info(f"Current user from session: {current_user}")
+    
+    # Get usage statistics for the current user
+
+    user =  get_user_by_email(current_user.get("email"))
+    logger.info(f"User: {user}")
+    user_id = user.get("id")
+
+    if user_id is None:
+        # If no ID in session, try to get user from database
+        logger.info(f"No user ID in session, looking up by email: {current_user.get('email')}")
+        db_user = users.find_one({"email": current_user.get("email")})
+        if db_user:
+            user_id = db_user.get("id")
+            logger.info(f"Found user ID from database: {user_id}")
+        else:
+            logger.warning("User not found in database")
+            return RedirectResponse(url="/login", status_code=302)
+    
+    usage_stats = await get_user_usage_stats(user_id)
+    if usage_stats is None:
+        logger.error(f"Could not get usage stats for user {user_id}")
+        return RedirectResponse(url="/login", status_code=302)
+    
+    logger.info(f"Usage stats for user {user_id}: {usage_stats}")
+    
+    # Format timestamps in usage history for display
+    for call in usage_stats["usage_history"]:
+        if "timestamp" in call:
+            # Convert timestamp to string in a readable format
+            call["timestamp"] = call["timestamp"].strftime("%Y-%m-%d %H:%M:%S")
+    
+    template_data = {
+        "request": request,
+        "user": current_user,
+        "total_calls": usage_stats["total_calls"],
+        "monthly_calls": usage_stats["monthly_calls"],
+        "remaining_quota": usage_stats["remaining_quota"],
+        "usage_history": usage_stats["usage_history"]
+    }
+    logger.info(f"Template data: {template_data}")
+    
+    return templates.TemplateResponse("usage.html", template_data)
