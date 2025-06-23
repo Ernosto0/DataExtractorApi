@@ -101,7 +101,7 @@
         apiKeyInput.type = 'text';  // Temporarily show the key to copy it
         navigator.clipboard.writeText(apiKeyInput.value).then(() => {
             apiKeyInput.type = originalType;  // Restore the original visibility
-            alert('API key copied to clipboard!');
+            
         }).catch(() => {
             apiKeyInput.type = originalType;  // Restore the original visibility
             alert('Failed to copy API key. Please try again.');

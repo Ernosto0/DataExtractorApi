@@ -9,7 +9,7 @@ from auth import (
     create_user, authenticate_user, create_access_token,
     get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES, regenerate_api_key, check_usage_limit, update_usage_limit, get_user_by_email
 )
-from api import extract, classify, multi_extract
+from api import extract, classify, multi_extract, detect_type
 from datetime import timedelta, datetime
 from pydantic import BaseModel, Field, validator
 from typing import Union, Dict, List, Optional
@@ -68,9 +68,10 @@ app.add_middleware(SessionMiddleware, secret_key="your-secret-key-here")  # Chan
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-app.include_router(extract.router, prefix="/api", tags=["Data Extraction"])
-app.include_router(classify.router, prefix="/api", tags=["Text Classification"])
+app.include_router(extract.router, prefix="/api" )
+app.include_router(classify.router, prefix="/api")
 app.include_router(multi_extract.router, prefix="/api", tags=["Multi-Record Extraction"])
+app.include_router(detect_type.router, prefix="/api", tags=["Type Detection"])
 
 async def get_current_user_from_session(request: Request):
     """Get current user from session"""
