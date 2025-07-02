@@ -6,7 +6,7 @@ import time
 from database import users,  log_api_usage
 from auth import check_usage_limit, update_usage_limit
 from utils import ErrorResponse
-from services.extractor import OpenAIExtractor
+from services.extractor import OpenAIExtractorSingle, run
 from pydantic import BaseModel, Field, validator
 
 import logging
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-MAX_TEXT_LENGTH = 1000
+MAX_TEXT_LENGTH = 5000
 
 class ExtractionRequest(BaseModel):
 
@@ -80,15 +80,15 @@ class ExtractionRequest(BaseModel):
 class ExtractedData(BaseModel):
     """Model for successful extraction results"""
     message: str = Field(..., example="Data extracted successfully")
-    data: Dict[str, Optional[Union[str, int, float]]] = Field(
+    data: Dict[str, Optional[Union[str, int, float, List[Union[str, int, float]]]]] = Field(
         ...,
-        description="Extracted data with field names as keys and extracted values or null. Values can be strings, integers, or floats.",
+        description="Extracted data with field names as keys and extracted values or null. Values can be strings, integers, floats, or lists of these types.",
         example={
-            "name": "John Doe",
-            "address": "123 Main St, New York",
-            "phone": "(555) 123-4567",
-            "quantity": 3,
-            "amount": 270.00
+            "name": ["John Doe", "Jane Smith"],
+            "address": ["123 Main St, New York", "456 Oak Ave, Chicago"],
+            "phone": ["(555) 123-4567", "(555) 987-6543"],
+            "quantity": [3, 5],
+            "amount": [270.00, 150.00]
         }
     )
 
@@ -135,8 +135,8 @@ async def extract_data(req: ExtractionRequest):
     update_usage_limit(user_identifier, 1)
 
     try:
-        openai_extractor = OpenAIExtractor({"text": req.text}, fields=req.fields)
-        result = openai_extractor.openai_api_call()
+      
+        result = run(req.text, req.fields)
         
         # Calculate response time
         response_time = int((time.time() - start_time) * 1000)  # Convert to milliseconds
