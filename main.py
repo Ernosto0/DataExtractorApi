@@ -88,7 +88,9 @@ app.add_middleware(
 app.add_middleware(SessionMiddleware, secret_key="your-secret-key-here")  # Change in production
 
 # Mount static files and templates
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Only mount static files if the directory exists
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 app.include_router(extract.router, prefix="/api")
