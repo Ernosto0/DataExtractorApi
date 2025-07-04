@@ -221,7 +221,7 @@
             <div id="python-tab" class="tab-content">
                 <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto"><code>import requests
 
-url = "{{ request.url_for('extract_data') }}"
+url = "https://www.dataextractorapi.com/api/extract"
 data = {
     "apikey": "your-api-key",
     "text": "John Doe lives at 123 Main St, NYC, phone: (555) 123-4567",
@@ -235,7 +235,7 @@ print(result["data"])</code></pre>
 
             <!-- JavaScript Example -->
             <div id="javascript-tab" class="tab-content hidden">
-                <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto"><code>const response = await fetch('{{ request.url_for('extract_data') }}', {
+                <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto"><code>const response = await fetch('https://www.dataextractorapi.com/api/extract', {
     method: 'POST',
     headers: {
         'Content-Type': 'application/json',
@@ -253,7 +253,7 @@ console.log(result.data);</code></pre>
 
             <!-- cURL Example -->
             <div id="curl-tab" class="tab-content hidden">
-                <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto"><code>curl -X POST "{{ request.url_for('extract_data') }}" \
+                <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto"><code>curl -X POST "https://www.dataextractorapi.com/api/extract" \
   -H "Content-Type: application/json" \
   -d '{
     "apikey": "your-api-key",
@@ -270,7 +270,7 @@ console.log(result.data);</code></pre>
     'fields' => ['name', 'address', 'phone']
 ];
 
-$ch = curl_init('{{ request.url_for('extract_data') }}');
+$ch = curl_init('https://www.dataextractorapi.com/api/extract');
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
@@ -375,7 +375,7 @@ print_r($result['data']);</code></pre>
         
         <div class="mt-8 p-6 bg-gray-50 rounded-lg">
             <h4 class="text-lg font-semibold text-gray-900 mb-3">cURL Example</h4>
-            <pre class="text-sm text-gray-700 overflow-x-auto"><code>curl -X POST "{{ request.url_for('extract_data') }}" \
+            <pre class="text-sm text-gray-700 overflow-x-auto"><code>curl -X POST "https://www.dataextractorapi.com/api/extract" \
   -H "Content-Type: application/json" \
   -d '{
     "apikey": "your-api-key",
