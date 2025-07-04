@@ -45,10 +45,10 @@ class ExtractionRequest(BaseModel):
         max_length=MAX_TEXT_LENGTH
     )
     
-    fields: Union[List[str], Dict[str, str]] = Field(
+    fields: Union[List[str], Dict[str, str], str] = Field(
         ..., 
         title="Fields to Extract",
-        description="Fields to extract from the text. Use an array for simple extraction ['name', 'email'] or an object for custom aliases {'customer_name': 'name', 'contact_email': 'email'}",
+        description="Fields to extract from the text. Use an array for simple extraction ['name', 'email'], a comma-separated string 'name,address,phone', or an object for custom aliases {'customer_name': 'name', 'contact_email': 'email'}",
         example=["name", "address", "phone"]
     )
 
@@ -62,6 +62,14 @@ class ExtractionRequest(BaseModel):
 
     @validator('fields')
     def fields_must_not_be_empty(cls, v):
+        # Handle comma-separated string input
+        if isinstance(v, str):
+            # Split by comma and strip whitespace
+            field_list = [field.strip() for field in v.split(',') if field.strip()]
+            if not field_list:
+                raise ValueError('Fields string cannot be empty and must contain non-empty field names')
+            return field_list
+        
         if isinstance(v, list) and (not v or not all(v)):
             raise ValueError('Fields list cannot be empty and must contain non-empty strings')
         if isinstance(v, dict) and (not v or not all(v.keys()) or not all(v.values())):
@@ -76,10 +84,29 @@ class ExtractionRequest(BaseModel):
     
     class Config:
         schema_extra = {
-            "example": {
-                "text": "John Doe lives at 123 Main St, New York and can be reached at (555) 123-4567",
-                "fields": ["name", "address", "phone"]
-            }
+            "examples": [
+                {
+                    "summary": "Array format",
+                    "value": {
+                        "text": "John Doe lives at 123 Main St, New York and can be reached at (555) 123-4567",
+                        "fields": ["name", "address", "phone"]
+                    }
+                },
+                {
+                    "summary": "Comma-separated string format",
+                    "value": {
+                        "text": "John Doe lives at 123 Main St, New York and can be reached at (555) 123-4567",
+                        "fields": "name,address,phone"
+                    }
+                },
+                {
+                    "summary": "Dictionary format with aliases",
+                    "value": {
+                        "text": "Customer: Jane Smith, Contact: jane@email.com",
+                        "fields": {"customer_name": "name", "contact_email": "email"}
+                    }
+                }
+            ]
         }
 
 class ExtractedData(BaseModel):
@@ -368,6 +395,7 @@ class ExtractedData(BaseModel):
     
     ## Field mapping:
     - Use a **list** for simple field extraction: `["name", "email", "phone"]`
+    - Use a **comma-separated string** for simple field extraction: `"name,email,phone"`
     - Use a **dictionary** for custom aliases: `{"customer_name": "name", "contact_email": "email"}`
     
     ## Text limitations:
@@ -406,8 +434,9 @@ async def extract_data(request: Request, req: ExtractionRequest):
         - Maximum length: 5,000 characters
         - Example: "John Doe lives at 123 Main St, New York and can be reached at (555) 123-4567"
     
-    - **fields** (array or object, required): Fields to extract from the text
+    - **fields** (array, string, or object, required): Fields to extract from the text
         - Array format: `["name", "email", "phone"]` for simple field extraction
+        - String format: `"name,email,phone"` for comma-separated field extraction
         - Object format: `{"customer_name": "name", "contact_email": "email"}` for custom aliases
         - At least one field must be specified
     
@@ -441,11 +470,19 @@ async def extract_data(request: Request, req: ExtractionRequest):
     
     ## Example Requests:
     
-    ### Simple extraction:
+    ### Simple extraction (array format):
     ```json
     {
         "text": "John Doe, email: john@example.com, phone: (555) 123-4567",
         "fields": ["name", "email", "phone"]
+    }
+    ```
+    
+    ### Simple extraction (string format):
+    ```json
+    {
+        "text": "John Doe, email: john@example.com, phone: (555) 123-4567",
+        "fields": "name,email,phone"
     }
     ```
     
