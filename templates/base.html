@@ -11,13 +11,34 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
     <!-- Navigation -->
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-6xl mx-auto px-4">
+    <nav class="bg-white shadow-lg border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-4">
-                    <a href="/" class="text-xl font-bold text-gray-800">Data Extractor</a>
+                <div class="flex items-center space-x-8">
+                    <a href="/" class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold text-gray-900">Data Extractor API</span>
+                    </a>
+                    
+                    <!-- Navigation Links -->
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="/#features" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">Features</a>
+                        <a href="/#demo" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">Demo</a>
+                        <a href="/docs" target="_blank" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">Documentation</a>
+                        {% if user %}
+                        <a href="/usage" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">Usage</a>
+                        {% endif %}
+                    </div>
+                    
                     {% if user %}
-                    <span class="text-gray-600">Welcome, <span class="font-semibold">{{ user.email }}</span></span>
+                    <div class="hidden md:block">
+                        <span class="text-sm text-gray-500">Welcome back, </span>
+                        <span class="text-sm font-semibold text-gray-700">{{ user.email }}</span>
+                    </div>
                     {% endif %}
                 </div>
                 <div class="flex items-center space-x-4">
@@ -49,8 +70,8 @@
                         <a href="/logout" class="text-red-600 hover:text-red-800 font-medium">Logout</a>
                     {% else %}
                         <a href="/login" class="text-blue-600 hover:text-blue-800">Login</a>
-                        <a href="/register" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            Register
+                        <a href="/register" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-sm">
+                            Get Started Free
                         </a>
                     {% endif %}
                 </div>

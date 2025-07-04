@@ -19,6 +19,10 @@ from database import users, generate_api_key, log_api_usage, get_user_usage_stat
 from fastapi.responses import JSONResponse
 import secrets
 import time
+import os
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Configure logging
 logging.basicConfig(
@@ -26,6 +30,12 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Rate limiting configuration
+limiter = Limiter(key_func=get_remote_address)
+
+# Environment variable to toggle API key requirement
+REQUIRE_API_KEY = os.getenv("REQUIRE_API_KEY", "true").lower() == "true"
 
 app = FastAPI(
     title="Data Extractor API",
@@ -38,8 +48,15 @@ app = FastAPI(
     - Consistent JSON output with null for missing fields
     - Comprehensive error handling
     - User authentication with JWT tokens
+    - Rate limiting protection against abuse
     
-    ## Authentication
+    ## Authentication & Security
+    - Two modes: API key authentication or rate-limited public access
+    - Rate limiting: 10 requests per minute per IP address
+    - Set REQUIRE_API_KEY=false for public testing (Zyla submission)
+    - Set REQUIRE_API_KEY=true for production with full user management
+    
+    ## Authentication (when REQUIRE_API_KEY=true)
     - Register a new user: POST /register
     - Login to get access token: POST /login
     - Use the access token in the Authorization header for protected endpoints
@@ -48,11 +65,17 @@ app = FastAPI(
     - Provide clear, well-formatted text for best results
     - Use field aliases for custom output field names
     - Check response status codes for error handling
+    - Respect rate limits to avoid 429 errors
     """,
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    separate_input_output_schemas=False
 )
+
+# Add rate limiter to the app
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS and Session
 app.add_middleware(
@@ -68,7 +91,7 @@ app.add_middleware(SessionMiddleware, secret_key="your-secret-key-here")  # Chan
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-app.include_router(extract.router, prefix="/api" )
+app.include_router(extract.router, prefix="/api")
 app.include_router(classify.router, prefix="/api")
 app.include_router(multi_extract.router, prefix="/api", tags=["Multi-Record Extraction"])
 app.include_router(detect_type.router, prefix="/api", tags=["Type Detection"])

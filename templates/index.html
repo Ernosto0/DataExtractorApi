@@ -1,31 +1,433 @@
 {% extends "base.html" %}
 
-{% block title %}Data Extractor - Extract Information{% endblock %}
+{% block title %}Data Extractor API - AI-Powered Data Extraction{% endblock %}
 
 {% block content %}
-<div class="space-y-8">
-    <!-- Extraction Form -->
-    <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800">Test it now</h2>
+<!-- Hero Section -->
+<div class="text-center mb-12">
+    <h1 class="text-5xl font-bold text-gray-900 mb-4">Data Extractor API</h1>
+    <p class="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+        Transform unstructured text into structured data using AI. Extract specific fields from any text with high accuracy and consistent JSON output.
+    </p>
+    <div class="flex justify-center space-x-4">
+        <a href="/docs" target="_blank" 
+           class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            View API Documentation
+        </a>
+        <a href="#demo" 
+           class="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Try Demo
+        </a>
+    </div>
+</div>
+
+<!-- Features Grid -->
+<div id="features" class="grid md:grid-cols-3 gap-8 mb-12">
+    <div class="bg-white p-6 rounded-lg shadow-md text-center">
+        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">AI-Powered Extraction</h3>
+        <p class="text-gray-600">Extract structured data from unstructured text using advanced OpenAI models with high accuracy.</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-md text-center">
+        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.871 4A17.926 17.926 0 003 12c0 2.874.673 5.59 1.871 8m14.13 0a17.926 17.926 0 001.87-8 17.926 17.926 0 00-1.87-8M6 12h.01M18 12h.01" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Flexible Field Mapping</h3>
+        <p class="text-gray-600">Specify any fields to extract. Support for custom aliases and multiple data types including text, numbers, and lists.</p>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow-md text-center">
+        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Rate Limited & Secure</h3>
+        <p class="text-gray-600">Built-in rate limiting and security features. Optional API key authentication for production use.</p>
+    </div>
+</div>
+
+<!-- API Overview -->
+<div class="bg-white rounded-lg shadow-md p-8 mb-12">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">How It Works</h2>
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">Simple REST API</h3>
+            <ul class="space-y-3 text-gray-600">
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Send text and specify fields to extract
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Receive structured JSON response
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Handle multiple records automatically
+                </li>
+                <li class="flex items-center">
+                    <svg class="h-5 w-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Get proper data types (strings, numbers, lists)
+                </li>
+            </ul>
+        </div>
+        <div class="bg-gray-50 p-6 rounded-lg">
+            <h4 class="text-lg font-semibold text-gray-900 mb-3">Example Request</h4>
+            <pre class="text-sm text-gray-700 overflow-x-auto"><code>{
+  "text": "John Doe at 123 Main St, (555) 123-4567",
+  "fields": ["name", "address", "phone"]
+}</code></pre>
+            <h4 class="text-lg font-semibold text-gray-900 mb-3 mt-4">Example Response</h4>
+            <pre class="text-sm text-gray-700 overflow-x-auto"><code>{
+  "message": "Data extracted successfully",
+  "data": {
+    "name": "John Doe",
+    "address": "123 Main St",
+    "phone": "(555) 123-4567"
+  }
+}</code></pre>
+        </div>
+    </div>
+</div>
+
+<!-- Use Cases -->
+<div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-8 mb-12">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">Perfect For</h2>
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a3 3 0 01-3-3V6a3 3 0 013-3h6a3 3 0 013 3v2z" />
+                </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900">Contact Information</h3>
+            <p class="text-sm text-gray-600">Extract names, emails, phones from text</p>
+        </div>
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0h2a2 2 0 002-2V7a2 2 0 00-2-2H9m0 0V5a2 2 0 012-2h2a2 2 0 012 2v0M9 5a2 2 0 012-2h2a2 2 0 012 2v0" />
+                </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900">Document Processing</h3>
+            <p class="text-sm text-gray-600">Parse invoices, receipts, forms</p>
+        </div>
+        <div class="text-center">
+            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900">Data Analysis</h3>
+            <p class="text-sm text-gray-600">Structure unorganized data</p>
+        </div>
+        <div class="text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900">Automation</h3>
+            <p class="text-sm text-gray-600">Integrate with workflows</p>
+        </div>
+    </div>
+</div>
+
+<!-- Integrations Section -->
+<div class="bg-white rounded-lg shadow-md p-8 mb-12">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">Easy Integrations</h2>
+    <p class="text-center text-gray-600 mb-8 max-w-3xl mx-auto">
+        Integrate with your favorite tools and platforms. Our RESTful API works seamlessly with any technology stack.
+    </p>
+    
+    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Python -->
+        <div class="text-center p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200">
+            <div class="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z"/>
+                </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">Python</h3>
+            <p class="text-sm text-gray-600">requests, aiohttp</p>
+        </div>
+
+        <!-- JavaScript/Node.js -->
+        <div class="text-center p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200">
+            <div class="w-16 h-16 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-yellow-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M0 0h24v24H0V0zm22.034 18.276c-.175-1.095-.888-2.015-3.003-2.873-.736-.345-1.554-.585-1.797-1.14-.091-.33-.105-.51-.046-.705.15-.646.915-.84 1.515-.66.39.12.75.42.976.9 1.034-.676 1.034-.676 1.755-1.125-.27-.42-.404-.601-.586-.78-.63-.705-1.469-1.065-2.834-1.034l-.705.089c-.676.165-1.32.525-1.71 1.005-1.14 1.291-.811 3.541.569 4.471 1.365 1.02 3.361 1.244 3.616 2.205.24 1.17-.87 1.545-1.966 1.41-.811-.18-1.26-.586-1.755-1.336l-1.83 1.051c.21.48.45.689.81 1.109 1.74 1.756 6.09 1.666 6.871-1.004.029-.09.24-.705.074-1.65l.046.067zm-8.983-7.245h-2.248c0 1.938-.009 3.864-.009 5.805 0 1.232.063 2.363-.138 2.711-.33.689-1.18.601-1.566.48-.396-.196-.597-.466-.83-.855-.063-.105-.11-.196-.127-.196l-1.825 1.125c.305.63.75 1.172 1.324 1.517.855.51 2.004.675 3.207.405.783-.226 1.458-.691 1.811-1.411.51-.93.402-2.07.397-3.346.012-2.054 0-4.109 0-6.179l.004-.056z"/>
+                </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">JavaScript</h3>
+            <p class="text-sm text-gray-600">fetch, axios, Node.js</p>
+        </div>
+
+        <!-- cURL/REST -->
+        <div class="text-center p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200">
+            <div class="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">cURL</h3>
+            <p class="text-sm text-gray-600">Command line, Bash</p>
+        </div>
+
+        <!-- PHP -->
+        <div class="text-center p-6 border border-gray-200 rounded-lg hover:shadow-md transition-shadow duration-200">
+            <div class="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.01 10.207h-.944l-.515 2.648h.838c.556 0 .982-.122 1.292-.391.315-.27.47-.632.47-1.086 0-.054-.004-.108-.012-.162-.075-.855-.497-1.009-.497-1.009H7.01zM12 5.688C5.373 5.688 0 8.514 0 12s5.373 6.313 12 6.313S24 15.486 24 12c0-3.486-5.373-6.312-12-6.312zm-3.26 7.451c-.013.256-.115.494-.287.708-.17.213-.399.382-.686.506-.287.124-.618.187-.991.187h-.175l-.346 1.755h-1.248l1.027-5.288h1.99c.641 0 1.125.156 1.429.469.304.313.456.737.456 1.272 0 .16-.017.319-.05.476-.03.129-.057.238-.119.915zm9.737.118c-.013.256-.115.494-.287.708-.17.213-.399.382-.686.506-.287.124-.618.187-.991.187h-.175l-.346 1.755h-1.248l1.027-5.288h1.99c.641 0 1.125.156 1.429.469.304.313.456.737.456 1.272 0 .16-.017.319-.05.476-.03.129-.057.238-.119.915zm-7.233-3.52h.838c.556 0 .982-.122 1.292-.391.315-.27.47-.632.47-1.086 0-.054-.004-.108-.012-.162-.075-.855-.497-1.009-.497-1.009h-.838l-.515 2.648h.262z"/>
+                </svg>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-2">PHP</h3>
+            <p class="text-sm text-gray-600">cURL, Guzzle</p>
+        </div>
+    </div>
+
+    <!-- Code Examples Tabs -->
+    <div class="max-w-4xl mx-auto">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8" id="integrationTabs">
+                <button onclick="showTab('python')" class="tab-button active border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600">Python</button>
+                <button onclick="showTab('javascript')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">JavaScript</button>
+                <button onclick="showTab('curl')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">cURL</button>
+                <button onclick="showTab('php')" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700">PHP</button>
+            </nav>
+        </div>
         
+        <div class="mt-6">
+            <!-- Python Example -->
+            <div id="python-tab" class="tab-content">
+                <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto"><code>import requests
+
+url = "{{ request.url_for('extract_data') }}"
+data = {
+    "apikey": "your-api-key",
+    "text": "John Doe lives at 123 Main St, NYC, phone: (555) 123-4567",
+    "fields": ["name", "address", "phone"]
+}
+
+response = requests.post(url, json=data)
+result = response.json()
+print(result["data"])</code></pre>
+            </div>
+
+            <!-- JavaScript Example -->
+            <div id="javascript-tab" class="tab-content hidden">
+                <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto"><code>const response = await fetch('{{ request.url_for('extract_data') }}', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+        apikey: 'your-api-key',
+        text: 'John Doe lives at 123 Main St, NYC, phone: (555) 123-4567',
+        fields: ['name', 'address', 'phone']
+    })
+});
+
+const result = await response.json();
+console.log(result.data);</code></pre>
+            </div>
+
+            <!-- cURL Example -->
+            <div id="curl-tab" class="tab-content hidden">
+                <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto"><code>curl -X POST "{{ request.url_for('extract_data') }}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "apikey": "your-api-key",
+    "text": "John Doe lives at 123 Main St, NYC, phone: (555) 123-4567",
+    "fields": ["name", "address", "phone"]
+  }'</code></pre>
+            </div>
+
+            <!-- PHP Example -->
+            <div id="php-tab" class="tab-content hidden">
+                <pre class="bg-gray-900 text-gray-100 p-6 rounded-lg overflow-x-auto"><code>$data = [
+    'apikey' => 'your-api-key',
+    'text' => 'John Doe lives at 123 Main St, NYC, phone: (555) 123-4567',
+    'fields' => ['name', 'address', 'phone']
+];
+
+$ch = curl_init('{{ request.url_for('extract_data') }}');
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+$result = json_decode($response, true);
+print_r($result['data']);</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Platforms & Tools -->
+<div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-8 mb-12">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">Works With Your Stack</h2>
+    <div class="grid md:grid-cols-3 lg:grid-cols-6 gap-6 items-center justify-items-center">
+        <!-- Zapier -->
+        <div class="text-center">
+            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <svg class="w-6 h-6 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-700">Zapier</span>
+        </div>
+
+        <!-- Make.com -->
+        <div class="text-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <svg class="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-700">Make</span>
+        </div>
+
+        <!-- Power Automate -->
+        <div class="text-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <svg class="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.5 6.5C7.5 8.981 9.519 11 12 11s4.5-2.019 4.5-4.5S14.481 2 12 2 7.5 4.019 7.5 6.5zM20 21h1v-1c0-3.859-3.141-7-7-7h-4c-3.859 0-7 3.141-7 7v1h1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1z"/>
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-700">Power Automate</span>
+        </div>
+
+        <!-- Docker -->
+        <div class="text-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <svg class="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.186"/>
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-700">Docker</span>
+        </div>
+
+        <!-- AWS -->
+        <div class="text-center">
+            <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <svg class="w-6 h-6 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M6.763 10.036c0 .296.032.535.088.71.064.176.144.368.256.576.112.208.24.4.384.576a4.72 4.72 0 00.513.497c.096.08.2.164.32.252.12.088.248.184.392.288.216.144.44.3.664.456.224.16.448.336.672.528.064.056.132.116.204.18.072.064.132.132.18.204.048.072.084.148.108.228.024.08.036.172.036.276 0 .144-.028.268-.084.372-.056.104-.14.204-.252.3-.112.096-.252.18-.42.252-.168.072-.372.116-.612.132a6.15 6.15 0 01-.576 0 6.15 6.15 0 01-.576-.048 4.81 4.81 0 01-.528-.096 3.79 3.79 0 01-.456-.144 2.61 2.61 0 01-.372-.192c-.112-.072-.2-.148-.264-.228a.515.515 0 01-.096-.288c0-.08.020-.156.06-.228.040-.072.096-.132.168-.18.072-.048.156-.084.252-.108.096-.024.2-.036.312-.036.144 0 .28.016.408.048.128.032.248.076.36.132.112.056.208.124.288.204.080.080.12.172.12.276 0 .096-.032.18-.096.252-.064.072-.148.132-.252.18-.104.048-.224.084-.36.108-.136.024-.276.036-.42.036-.112 0-.224-.008-.336-.024-.112-.016-.216-.048-.312-.096-.096-.048-.18-.112-.252-.192-.072-.080-.108-.18-.108-.3 0-.144.036-.268.108-.372.072-.104.168-.196.288-.276.120-.080.256-.148.408-.204.152-.056.304-.1.456-.132.152-.032.296-.056.432-.072.136-.016.252-.024.348-.024.2 0 .384.016.552.048.168.032.312.084.432.156.120.072.212.164.276.276.064.112.096.244.096.396 0 .256-.072.480-.216.672-.144.192-.336.364-.576.516-.240.152-.508.284-.804.396-.296.112-.604.204-.924.276-.320.072-.636.124-.948.156-.312.032-.604.048-.876.048-.656 0-1.248-.076-1.776-.228-.528-.152-.972-.364-1.332-.636-.360-.272-.632-.596-.816-.972-.184-.376-.276-.788-.276-1.236 0-.304.040-.596.12-.876.080-.280.196-.532.348-.756.152-.224.336-.416.552-.576.216-.160.456-.284.720-.372.264-.088.544-.152.840-.192.296-.040.604-.06.924-.06.352 0 .688.024 1.008.072.320.048.612.124.876.228.264.104.484.236.66.396.176.160.264.356.264.588 0 .144-.036.268-.108.372-.072.104-.168.192-.288.264-.120.072-.256.124-.408.156-.152.032-.304.048-.456.048-.2 0-.38-.024-.54-.072-.16-.048-.296-.116-.408-.204-.112-.088-.196-.192-.252-.312-.056-.120-.084-.252-.084-.396 0-.32.1-.576.3-.768.2-.192.456-.336.768-.432.312-.096.664-.168 1.056-.216.392-.048.8-.072 1.224-.072.656 0 1.244.072 1.764.216.520.144.956.344 1.308.6.352.256.62.556.804.9.184.344.276.712.276 1.104 0 .48-.108.908-.324 1.284-.216.376-.516.692-.9.948-.384.256-.836.448-1.356.576-.520.128-1.084.192-1.692.192-.304 0-.608-.016-.912-.048-.304-.032-.596-.084-.876-.156-.280-.072-.544-.168-.792-.288-.248-.120-.468-.264-.66-.432-.192-.168-.344-.364-.456-.588-.112-.224-.168-.484-.168-.78 0-.352.072-.664.216-.936.144-.272.336-.5.576-.684.240-.184.516-.324.828-.42.312-.096.636-.144.972-.144.352 0 .684.048.996.144.312.096.576.236.792.42.216.184.384.412.504.684.120.272.18.584.18.936z"/>
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-700">AWS</span>
+        </div>
+
+        <!-- Webhook -->
+        <div class="text-center">
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                <svg class="w-6 h-6 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10.59 13.41c.41.39.41 1.03 0 1.42-.39.39-1.03.39-1.42 0a5.003 5.003 0 01-1.48-3.56c0-1.38.56-2.63 1.47-3.53.39-.39 1.03-.39 1.42 0 .39.39.39 1.02 0 1.41-.65.63-1.04 1.51-1.04 2.47 0 .96.4 1.84 1.05 2.47zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-1.85.63-3.55 1.69-4.9l1.41 1.41C6.56 9.1 6 10.5 6 12c0 3.31 2.69 6 6 6s6-2.69 6-6-2.69-6-6-6c-1.5 0-2.9.56-3.95 1.56L6.64 6.15C8.09 4.85 9.94 4 12 4c4.41 0 8 3.59 8 8s-3.59 8-8 8z"/>
+                </svg>
+            </div>
+            <span class="text-sm font-medium text-gray-700">Webhooks</span>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Start -->
+<div class="bg-white rounded-lg shadow-md p-8 mb-12">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">Quick Start</h2>
+    <div class="max-w-4xl mx-auto">
+        <div class="grid md:grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">1. Get Your API Key</h3>
+                <p class="text-gray-600 mb-4">Register for an account to get your API key for authenticated requests.</p>
+                {% if not user %}
+                <a href="/register" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                    Sign Up Free
+                </a>
+                {% endif %}
+            </div>
+            <div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">2. Make Your First Call</h3>
+                <p class="text-gray-600 mb-4">Use our RESTful API to extract data from any text.</p>
+                <a href="/docs" target="_blank" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    View API Docs
+                </a>
+            </div>
+        </div>
+        
+        <div class="mt-8 p-6 bg-gray-50 rounded-lg">
+            <h4 class="text-lg font-semibold text-gray-900 mb-3">cURL Example</h4>
+            <pre class="text-sm text-gray-700 overflow-x-auto"><code>curl -X POST "{{ request.url_for('extract_data') }}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "apikey": "your-api-key",
+    "text": "Invoice #12345 for $250.00 to John Smith",
+    "fields": ["invoice_number", "amount", "customer_name"]
+  }'</code></pre>
+        </div>
+    </div>
+</div>
+
+<!-- Live Demo -->
+<div id="demo" class="bg-white rounded-lg shadow-md p-8">
+    <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">Try It Live</h2>
+    <p class="text-center text-gray-600 mb-8">Test the API directly from your browser</p>
+    
+    <div class="max-w-4xl mx-auto">
         <form id="extractForm" class="space-y-6">
             <div>
-                <label for="text" class="block text-sm font-medium text-gray-700">Text to Extract From</label>
+                <label for="text" class="block text-sm font-medium text-gray-700 mb-2">Text to Extract From</label>
                 <textarea name="text" id="text" rows="4" required
-                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter the text you want to extract information from..."></textarea>
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter text to extract data from...">John Doe lives at 123 Main St, New York and can be reached at (555) 123-4567</textarea>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700">Fields to Extract</label>
-                <div id="fields" class="mt-2 space-y-3">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Fields to Extract</label>
+                <div id="fields" class="space-y-3">
                     <div class="flex items-center space-x-2">
-                        <input type="text" name="fields[]" required
+                        <input type="text" name="fields[]" required value="name"
                             class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Enter field name">
+                            placeholder="e.g., name, address, phone">
                         <button type="button" onclick="addField()"
-                            class="px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            class="px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
                             +
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" name="fields[]" required value="address"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="e.g., name, address, phone">
+                        <button type="button" onclick="this.parentElement.remove()"
+                            class="px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                            ×
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" name="fields[]" required value="phone"
+                            class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="e.g., name, address, phone">
+                        <button type="button" onclick="this.parentElement.remove()"
+                            class="px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
+                            ×
                         </button>
                     </div>
                 </div>
@@ -38,12 +440,12 @@
                 </button>
             </div>
         </form>
-    </div>
 
-    <!-- Results Section -->
-    <div id="results" class="bg-white p-6 rounded-lg shadow-md hidden">
-        <h3 class="text-xl font-bold mb-4 text-gray-800">Extracted Data</h3>
-        <pre id="resultJson" class="bg-gray-50 p-4 rounded-md overflow-x-auto"></pre>
+        <!-- Results Section -->
+        <div id="results" class="mt-8 bg-gray-50 p-6 rounded-lg hidden">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">Extracted Data</h3>
+            <pre id="resultJson" class="bg-white p-4 rounded-md overflow-x-auto border"></pre>
+        </div>
     </div>
 </div>
 
@@ -57,7 +459,7 @@
                 class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter field name">
             <button type="button" onclick="this.parentElement.remove()"
-                class="px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                class="px-3 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700">
                 ×
             </button>
         `;
@@ -68,10 +470,15 @@
         e.preventDefault();
         
         const text = document.getElementById('text').value;
-        const fields = Array.from(document.getElementsByName('fields[]')).map(input => input.value);
+        const fields = Array.from(document.getElementsByName('fields[]')).map(input => input.value).filter(f => f.trim());
+        
+        if (fields.length === 0) {
+            alert('Please add at least one field to extract.');
+            return;
+        }
         
         try {
-            const response = await fetch('/extract', {
+            const response = await fetch('/api/extract', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -88,10 +495,38 @@
             document.getElementById('results').classList.remove('hidden');
             document.getElementById('resultJson').textContent = JSON.stringify(data, null, 2);
             
+            // Scroll to results
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+            
         } catch (error) {
             alert('Error extracting data. Please try again.');
             console.error('Error:', error);
         }
     });
+
+    // Tab switching functionality for integrations
+    function showTab(tabName) {
+        // Hide all tab contents
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(tab => tab.classList.add('hidden'));
+
+        // Remove active class from all tab buttons
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+            button.classList.remove('active', 'border-blue-500', 'text-blue-600');
+            button.classList.add('border-transparent', 'text-gray-500');
+        });
+
+        // Show selected tab content
+        const selectedTab = document.getElementById(tabName + '-tab');
+        if (selectedTab) {
+            selectedTab.classList.remove('hidden');
+        }
+
+        // Add active class to clicked button
+        const clickedButton = event.target;
+        clickedButton.classList.remove('border-transparent', 'text-gray-500');
+        clickedButton.classList.add('active', 'border-blue-500', 'text-blue-600');
+    }
 </script>
 {% endblock %} 

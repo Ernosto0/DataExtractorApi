@@ -86,4 +86,3 @@ class MultiRecordExtractor:
                 "error": "Extraction failed",
                 "details": str(e)
             }
-        

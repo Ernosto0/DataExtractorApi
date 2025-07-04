@@ -31,3 +31,44 @@ class ErrorResponse(BaseModel):
             }
         ]
     )
+
+class ValidationErrorResponse(BaseModel):
+    """Model for validation error responses"""
+    detail: Dict[str, str] = Field(
+        ...,
+        description="Validation error details with field-specific messages",
+        example={
+            "message": "Validation failed",
+            "errors": {
+                "text": "Text cannot be empty or exceed 5000 characters",
+                "fields": "At least one field must be specified",
+                "apikey": "API key is required when authentication is enabled"
+            }
+        }
+    )
+
+class RateLimitErrorResponse(BaseModel):
+    """Model for rate limit error responses"""
+    detail: Dict[str, str] = Field(
+        ...,
+        description="Rate limit error details",
+        example={
+            "message": "Rate limit exceeded",
+            "error": "Too many requests",
+            "retry_after": "60 seconds",
+            "limit": "10 requests per minute"
+        }
+    )
+
+class ExtractionErrorResponse(BaseModel):
+    """Model for extraction failure responses"""
+    detail: Dict[str, str] = Field(
+        ...,
+        description="Extraction error details",
+        example={
+            "message": "Extraction failed",
+            "error": "AI model failed to process text",
+            "details": "Text contains unsupported characters or format",
+            "suggestion": "Try simplifying the text or reducing the number of fields"
+        }
+    )
