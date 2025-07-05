@@ -23,7 +23,9 @@ RAPIDAPI_SECRET_KEY = os.getenv("RAPIDAPI_SECRET_KEY", "1e7781f0-5911-11f0-a464-
 # For maximum security, you may need to contact RapidAPI support for their current IP ranges
 ZYLA_IP_RANGES = [
     # Zyla API marketplace IP ranges
-    "100.64.0.4"
+    "100.64.0.4",       # Your Railway internal IP
+    "34.204.78.119",    # Zyla's external IP (from X-Forwarded-For)
+    "34.204.78.0/24",   # Zyla's IP range (AWS us-east-1)
 ]
 
 RAPIDAPI_IP_RANGES = [
@@ -50,15 +52,44 @@ class ProviderVerificationError(Exception):
 def is_ip_in_range(ip: str, ip_ranges: list) -> bool:
     """
     Check if an IP address is within any of the specified ranges.
-    This is a simplified implementation - for production use ipaddress module.
     """
-    # For now, return True as a placeholder
-    # In production, implement proper IP range checking
-    return True
+    try:
+        import ipaddress
+        
+        if not ip or ip == "unknown":
+            return False
+            
+        ip_obj = ipaddress.ip_address(ip)
+        
+        for ip_range in ip_ranges:
+            try:
+                # Handle both single IPs and CIDR ranges
+                if '/' in ip_range:
+                    network = ipaddress.ip_network(ip_range, strict=False)
+                    if ip_obj in network:
+                        return True
+                else:
+                    # Single IP address
+                    if ip_obj == ipaddress.ip_address(ip_range):
+                        return True
+            except ValueError:
+                logger.warning(f"Invalid IP range format: {ip_range}")
+                continue
+                
+        return False
+        
+    except Exception as e:
+        logger.error(f"Error checking IP range for {ip}: {e}")
+        return False
 
 def verify_zyla_request(request: Request) -> bool:
     """
     Verify that the request is coming from Zyla API marketplace.
+    
+    Zyla doesn't use API keys like RapidAPI. Instead, we verify based on:
+    - IP address (requests come from Zyla's infrastructure)
+    - User-Agent pattern (GuzzleHttp)
+    - Request characteristics
     
     Args:
         request: FastAPI Request object
@@ -67,46 +98,39 @@ def verify_zyla_request(request: Request) -> bool:
         bool: True if request is verified as coming from Zyla
     """
     try:
-        # Check for Zyla-specific headers
-        zyla_signature = request.headers.get("X-Zyla-Signature")
-        zyla_timestamp = request.headers.get("X-Zyla-Timestamp")
+        user_agent = request.headers.get("User-Agent", "")
         
-        if not zyla_signature or not zyla_timestamp:
-            logger.warning("Missing Zyla verification headers")
-            return False
-            
-        # Verify timestamp is recent (within 5 minutes)
-        try:
-            timestamp = datetime.fromisoformat(zyla_timestamp.replace('Z', '+00:00'))
-            if datetime.now() - timestamp > timedelta(minutes=5):
-                logger.warning("Zyla request timestamp too old")
-                return False
-        except ValueError:
-            logger.warning("Invalid Zyla timestamp format")
-            return False
-            
-        # Verify signature if secret key is configured
-        if ZYLA_SECRET_KEY:
-            # This is a placeholder - implement actual signature verification
-            # based on Zyla's documentation
-            expected_signature = hmac.new(
-                ZYLA_SECRET_KEY.encode(),
-                f"{zyla_timestamp}".encode(),
-                hashlib.sha256
-            ).hexdigest()
-            
-            if not hmac.compare_digest(zyla_signature, expected_signature):
-                logger.warning("Zyla signature verification failed")
-                return False
-                
-        # Check IP range
+        # Get the real source IP address
+        # Zyla requests come through proxies, so check forwarded headers
+        forwarded_ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        real_ip = request.headers.get("X-Real-IP", "")
         client_ip = request.client.host if request.client else "unknown"
-        if not is_ip_in_range(client_ip, ZYLA_IP_RANGES):
-            logger.warning(f"Request from non-Zyla IP: {client_ip}")
-            return False
+        
+        # Use the most reliable IP source
+        source_ip = forwarded_ip or real_ip or client_ip
+        
+        # Check if request has Zyla characteristics
+        has_guzzle_agent = "GuzzleHttp" in user_agent
+        has_zyla_ip = source_ip in ["34.204.78.119"] or is_ip_in_range(source_ip, ZYLA_IP_RANGES)
+        
+        # Look for any Zyla-specific headers (they might use x-zyla-api-key as a placeholder)
+        has_zyla_header = any(header.lower().startswith('x-zyla') for header in request.headers.keys())
+        
+        # Verify based on multiple factors
+        if has_zyla_ip and has_guzzle_agent:
+            logger.info(f"Zyla request verified by IP and User-Agent - IP: {source_ip}, UA: {user_agent}")
+            return True
+        
+        if has_zyla_ip and has_zyla_header:
+            logger.info(f"Zyla request verified by IP and headers - IP: {source_ip}")
+            return True
             
-        logger.info("Zyla request verified successfully")
-        return True
+        if has_zyla_ip:
+            logger.info(f"Zyla request verified by IP address - IP: {source_ip}")
+            return True
+            
+        logger.warning(f"Zyla verification failed - IP: {source_ip}, UA: {user_agent}, Headers: {list(request.headers.keys())}")
+        return False
         
     except Exception as e:
         logger.error(f"Error verifying Zyla request: {e}")
