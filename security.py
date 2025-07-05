@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 # Environment variables for security configuration
 ENABLE_PROVIDER_VERIFICATION = os.getenv("ENABLE_PROVIDER_VERIFICATION", "false").lower() == "true"
 ZYLA_SECRET_KEY = os.getenv("ZYLA_SECRET_KEY", "")
-RAPIDAPI_SECRET_KEY = os.getenv("RAPIDAPI_SECRET_KEY", "1e7781f0-5911-11f0-a464-fb578da09ad0")
+RAPIDAPI_SECRET_KEY = os.getenv("RAPIDAPI_SECRET_KEY")
+OPENAPI_SECRET_KEY = os.getenv("OPENAPI_SECRET_KEY")
 
 # Trusted IP ranges for API marketplaces
 # Note: RapidAPI uses rapidapi.com gateway DNS, but specific IP ranges are not publicly documented
@@ -43,6 +44,14 @@ RAPIDAPI_IP_RANGES = [
     "104.24.0.0/14",   # Cloudflare ranges
     "172.64.0.0/13",   # Cloudflare ranges
     "131.0.72.0/22",   # Cloudflare ranges
+]
+
+OPENAPI_IP_RANGES = [
+    
+    "100.64.0.0/10",       # Railway internal network
+    "192.168.0.0/16",      # Common private ranges
+    "10.0.0.0/8",          # Common private ranges
+    "172.16.0.0/12",       # Common private ranges
 ]
 
 class ProviderVerificationError(Exception):
@@ -189,6 +198,46 @@ def verify_rapidapi_request(request: Request) -> bool:
         logger.error(f"Error verifying RapidAPI request: {e}")
         return False
 
+def verify_openapi_request(request: Request) -> bool:
+    """
+    Verify that the request is coming from OpenAPI/FabriXAPI marketplace.
+    
+    Args:
+        request: FastAPI Request object
+        
+    Returns:
+        bool: True if request is verified as coming from OpenAPI/FabriXAPI
+    """
+    try:
+        # Check for OpenAPI-specific headers
+        openapi_proxy_secret = (request.headers.get("X-OAH-Proxy-Secret") or 
+                               request.headers.get("x-oah-proxy-secret"))
+        
+        if not openapi_proxy_secret:
+            logger.warning("Missing OpenAPI/FabriXAPI proxy secret header")
+            return False
+            
+        # Verify proxy secret if configured
+        if OPENAPI_SECRET_KEY:
+            if openapi_proxy_secret != OPENAPI_SECRET_KEY:
+                logger.warning(f"OpenAPI proxy secret verification failed. Expected: {OPENAPI_SECRET_KEY}, Got: {openapi_proxy_secret}")
+                return False
+                
+        # Get IP info for logging
+        forwarded_for = request.headers.get("X-Forwarded-For", "")
+        real_ip = request.headers.get("X-Real-IP", "")
+        client_ip = request.client.host if request.client else "unknown"
+        
+        # Use the most reliable IP source
+        source_ip = real_ip or (forwarded_for.split(",")[0].strip() if forwarded_for else "") or client_ip
+        
+        logger.info(f"OpenAPI/FabriXAPI request verified successfully - Secret: {openapi_proxy_secret}, IP: {source_ip}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error verifying OpenAPI request: {e}")
+        return False
+
 def verify_trusted_provider(request: Request) -> Dict[str, Any]:
     """
     Verify that the request is coming from a trusted API marketplace provider.
@@ -223,6 +272,14 @@ def verify_trusted_provider(request: Request) -> Dict[str, Any]:
             "verified": True,
             "provider": "rapidapi",
             "reason": "Verified RapidAPI marketplace request"
+        }
+    
+    # Check for OpenAPI/FabriXAPI
+    if verify_openapi_request(request):
+        return {
+            "verified": True,
+            "provider": "openapi",
+            "reason": "Verified OpenAPI/FabriXAPI marketplace request"
         }
     
     # Check if request is from local/direct access (for testing)
