@@ -22,9 +22,8 @@ RAPIDAPI_SECRET_KEY = os.getenv("RAPIDAPI_SECRET_KEY", "1e7781f0-5911-11f0-a464-
 # Note: RapidAPI uses rapidapi.com gateway DNS, but specific IP ranges are not publicly documented
 # For maximum security, you may need to contact RapidAPI support for their current IP ranges
 ZYLA_IP_RANGES = [
-    # Zyla API marketplace IP ranges (replace with actual ranges from Zyla)
-    "192.168.1.0/24",  # Placeholder - contact Zyla for actual IP ranges
-    "10.0.0.0/8",      # Placeholder - contact Zyla for actual IP ranges
+    # Zyla API marketplace IP ranges
+    "100.64.0.4"
 ]
 
 RAPIDAPI_IP_RANGES = [
