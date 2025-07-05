@@ -30,9 +30,6 @@
                         <a href="/#features" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">Features</a>
                         <a href="/#demo" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">Demo</a>
                         <a href="/docs" target="_blank" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">Documentation</a>
-                        {% if user %}
-                        <a href="/usage" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">Usage</a>
-                        {% endif %}
                     </div>
                     
                     {% if user %}
@@ -43,30 +40,26 @@
                     {% endif %}
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-4">
-                    {% if user %}
-                        <a href="/apikeys" 
-                           class="hidden sm:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    <!-- API Marketplace Links -->
+                    <div class="hidden sm:flex items-center space-x-2">
+                        <a href="https://zylalabs.com/api-marketplace/data+extraction/data-extractor-api/2987" 
+                           target="_blank"
+                           class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
-                            <span class="hidden lg:inline">API Keys</span>
+                            Zyla
                         </a>
-                        <a href="/usage" 
-                           class="hidden sm:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        <a href="https://rapidapi.com/your-api-endpoint" 
+                           target="_blank"
+                           class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
-                            <span class="hidden lg:inline">Usage Stats</span>
+                            RapidAPI
                         </a>
-                    {% endif %}
-                    <a href="/docs" 
-                       target="_blank" 
-                       class="inline-flex items-center px-3 sm:px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <span class="hidden sm:inline">API Docs</span>
-                    </a>
+                    </div>
+                    
                     {% if user %}
                         <a href="/logout" class="text-red-600 hover:text-red-800 font-medium text-sm">Logout</a>
                     {% else %}

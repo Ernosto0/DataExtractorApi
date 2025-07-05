@@ -23,6 +23,7 @@ import os
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from security import provider_verification_middleware, get_provider_info
 
 # Configure logging
 logging.basicConfig(
@@ -86,6 +87,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(SessionMiddleware, secret_key="your-secret-key-here")  # Change in production
+
+# Add provider verification middleware
+app.middleware("https")(provider_verification_middleware)
 
 # Mount static files and templates
 # Only mount static files if the directory exists
