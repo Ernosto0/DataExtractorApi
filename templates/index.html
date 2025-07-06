@@ -356,13 +356,25 @@ print_r($result['data']);</code></pre>
     <div class="max-w-4xl mx-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             <div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-4">1. Get Your API Key</h3>
-                <p class="text-gray-600 mb-4">Register for an account to get your API key for authenticated requests.</p>
-                {% if not user %}
-                <a href="/register" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                    Sign Up Free
-                </a>
-                {% endif %}
+                <h3 class="text-xl font-semibold text-gray-900 mb-4">1. Choose Your Provider</h3>
+                <p class="text-gray-600 mb-4">Access our API through one of our trusted marketplace partners.</p>
+                <div class="flex flex-wrap gap-2">
+                    <a href="https://zylalabs.com/api-marketplace/data+extraction/data-extractor-api/2987" 
+                       target="_blank"
+                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        Zyla Labs
+                    </a>
+                    <a href="https://rapidapi.com/ernosto2003/api/ai-data-extraction-api" 
+                       target="_blank"
+                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        RapidAPI
+                    </a>
+                    <a href="https://portal.fabrixapi.com/ai-data-extraction-api-t4vkw/api/data-extraction-d9794/endpoint" 
+                       target="_blank"
+                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                        FabrixAPI
+                    </a>
+                </div>
             </div>
             <div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-4">2. Make Your First Call</h3>
