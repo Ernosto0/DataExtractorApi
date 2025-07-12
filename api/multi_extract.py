@@ -1,18 +1,19 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Dict, Optional
-from services.multi_record_extractor import MultiRecordExtractor
+from typing import List, Dict, Optional, Union
+from services.multi_record_extractor import run as multi_extract_run
 from pydantic import BaseModel, Field, validator
 
 router = APIRouter()
 
-MAX_TEXT_LENGTH = 1000
+MAX_TEXT_LENGTH = 5000
 
 
 class MultiExtractRequest(BaseModel):
-    apikey: str = Field(
-        ...,
-        description="API key for authentication",
+    apikey: Optional[str] = Field(
+        None,
+        title="API Key",
+        description="Your API key for authentication. Required in production mode (REQUIRE_API_KEY=true), optional in testing mode (REQUIRE_API_KEY=false).",
         example="1234567890"
     )
 
@@ -21,6 +22,12 @@ class MultiExtractRequest(BaseModel):
         description="The text to extract information from",
         example="John sent $50 to Alice. Bob sent $40 to Sarah. Chris owes $80 to Megan."
     )
+    
+    fields: Optional[Union[List[str], Dict[str, str], str]] = Field(
+        None,
+        description="Optional fields to extract from each record. Can be a list of field names, a dictionary mapping aliases to field names, or a single field name as a string.",
+        example=["sender", "amount", "recipient"]
+    )
 
     @validator('text')
     def text_must_not_be_empty(cls, v):
@@ -28,11 +35,11 @@ class MultiExtractRequest(BaseModel):
             raise ValueError('Text cannot be empty')
         return v.strip()
     
-    @validator('apikey')
-    def apikey_must_not_be_empty(cls, v):
-        if not v.strip():
-            raise ValueError('API key is required')
-        return v.strip()
+    # @validator('apikey')
+    # def apikey_must_not_be_empty(cls, v):
+    #     if v and not v.strip():
+    #         raise ValueError('API key cannot be empty')
+    #     return v.strip() if v else v
     
     
     @validator('text')
@@ -40,6 +47,14 @@ class MultiExtractRequest(BaseModel):
         if len(v) > MAX_TEXT_LENGTH:
             raise ValueError(f'Text cannot be more than {MAX_TEXT_LENGTH} characters')
         return v
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "text": "John sent $50 to Alice. Bob sent $40 to Sarah. Chris owes $80 to Megan.",
+                "fields": ["sender", "amount", "recipient"]
+            }
+        }
 
 class MultiExtractResponse(BaseModel):
     message: str = Field(..., example="Records extracted successfully")
@@ -80,8 +95,7 @@ async def extract_multiple_records(request: MultiExtractRequest):
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty")
 
-    extractor = MultiRecordExtractor()
-    result = extractor.extract_records(request.text)
+    result = multi_extract_run(request.text, request.fields)
 
     if isinstance(result, dict) and "error" in result:
         raise HTTPException(
