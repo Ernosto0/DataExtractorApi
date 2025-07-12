@@ -23,6 +23,24 @@ def run(text: str, fields: list):
         openai_classifier = OpenAIClassifierSingle({"text": text}, fields=fields)
         return openai_classifier.openai_api_call()
 
+def _process_fields_input(fields):
+    """Process fields input to handle string, list, and dict formats"""
+    if fields is None:
+        return []
+    
+    if isinstance(fields, str):
+        # If it's a string, treat it as a single label
+        return [fields]
+    elif isinstance(fields, list):
+        # If it's already a list, return as-is
+        return fields
+    elif isinstance(fields, dict):
+        # If it's a dict, use the values
+        return list(fields.values())
+    else:
+        # Fallback: try to convert to list
+        return list(fields) if hasattr(fields, '__iter__') else [str(fields)]
+
 class OpenAIClassifierSingle:
     def __init__(self, json_data: dict, fields=None):
         self.json_data = json_data
@@ -40,8 +58,13 @@ class OpenAIClassifierSingle:
         if not text:
             return {"error": "No text provided for classification"}
 
+        # Process fields to handle string, list, and dict formats
+        processed_fields = _process_fields_input(self.fields)
+        if not processed_fields:
+            return {"error": "No valid labels provided for classification"}
+
         # Create the prompt for classification
-        labels_str = ", ".join(self.fields)
+        labels_str = ", ".join(processed_fields)
         prompt = f"""Classify the following text into one or more of these categories: {labels_str}
 
 Text: {text}
@@ -105,7 +128,12 @@ class OpenAIClassifierMulti:
         if not input_text:
             return {"error": "No text provided for classification"}
 
-        labels_str = ", ".join(self.fields)
+        # Process fields to handle string, list, and dict formats
+        processed_fields = _process_fields_input(self.fields)
+        if not processed_fields:
+            return {"error": "No valid labels provided for classification"}
+
+        labels_str = ", ".join(processed_fields)
         chunk_size = 1000
         all_labels = set()
 

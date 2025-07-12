@@ -5,7 +5,7 @@ from fastapi import HTTPException
 import time
 from database import users,  log_api_usage
 from auth import check_usage_limit, update_usage_limit
-from services.classifier import OpenAIClassifier
+from services.classifier import run as classify_run
 from utils import ErrorResponse
 from pydantic import BaseModel, Field, validator
 import logging
@@ -28,7 +28,7 @@ class ClassificationRequest(BaseModel):
     )
 
     text: str = Field(..., description="The text to classify")
-    labels: List[str] = Field(..., description="The labels to classify the text into")
+    labels: Union[List[str], Dict[str, str], str] = Field(..., description="The labels to classify the text into")
 
     @validator('text')
     def text_must_not_be_empty(cls, v):
@@ -106,8 +106,7 @@ async def classify_data(req: ClassificationRequest):
 
         # update_usage_limit(user_identifier, 1)
 
-        openai_classifier = OpenAIClassifier({"text": req.text}, fields=req.labels)
-        result = openai_classifier.openai_api_call()
+        result = classify_run(req.text, req.labels)
         
         # Calculate response time
         response_time = int((time.time() - start_time) * 1000)  # Convert to milliseconds
